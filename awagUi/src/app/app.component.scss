@@ -1,0 +1,27 @@
+:host ::ng-deep .app-controls-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+
+  .app-control-item {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+    margin-bottom: 10px;
+
+    .app-control-label {
+      font-weight: bold;
+      font-size: 0.7em;
+      margin-bottom: 5px;
+    }
+
+    .app-checkbox-label {
+      display: flex;
+      align-items: flex-start;
+
+      input[type="checkbox"] {
+        margin-right: 5px;
+      }
+    }
+  }
+}

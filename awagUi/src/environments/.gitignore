@@ -1,0 +1,6 @@
+
+# Environments
+environment.ts
+environment.prod.ts
+!*sample*
+

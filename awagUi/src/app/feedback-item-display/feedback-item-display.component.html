@@ -1,0 +1,556 @@
+<!--
+BSD 3-Clause Clear License
+
+Copyright (c) 2023-2025, David Goddard. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions, and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions, and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY
+THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<h2>Evaluation explorer</h2>
+
+<ng-container *ngTemplateOutlet="exploreControlsTemplate"></ng-container>
+
+<ng-container *ngTemplateOutlet="paginationControlsTemplate"></ng-container>
+
+<div *ngIf="evaluationData">
+
+  <ng-container *ngIf="selectedMode === 'mode1'">
+    <ng-container *ngTemplateOutlet="mode1HeaderTemplate"></ng-container>
+    <ng-container *ngTemplateOutlet="evaluationItemsTemplate"></ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="selectedMode === 'mode2'">
+    <ng-container *ngTemplateOutlet="mode2HeaderTemplate"></ng-container>
+    <ng-container *ngTemplateOutlet="evaluationItemsTemplate"></ng-container>
+  </ng-container>
+
+</div>
+
+<!-- Template for explore controls at top of page -->
+<ng-template #exploreControlsTemplate>
+
+  <div class="app-controls-wrapper">
+    <div class="app-control-item">
+      <label class="app-control-label">Mode:</label>
+      <select [(ngModel)]="selectedMode" (change)="onModeChange()">
+        <option value="mode1">Mode 1</option>
+        <option value="mode2">Mode 2</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Persona:</label>
+      <select [(ngModel)]="selectedPersona" (change)="loadData()">
+        <option value="">Select a persona</option>
+        <option *ngFor="let persona of personas" [value]="persona.persona_id">{{ persona.persona_name }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Tag:</label>
+      <select [(ngModel)]="tag" (change)="loadData()">
+        <option value="">Select a tag</option>
+        <option *ngFor="let availableTag of tags" [value]="availableTag">{{ availableTag }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Time Period:</label>
+      <select [(ngModel)]="lastNHours" (change)="onReloadableChange()">
+        <option *ngFor="let timeOption of lastNHoursOptions" [value]="lastNHoursValues[timeOption]">{{ timeOption }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Subset Tag:</label>
+      <select [(ngModel)]="subsetTag" (change)="onReloadableChange()">
+        <option *ngFor="let availableSubsetTag of subsetTags" [value]="availableSubsetTag">{{ availableSubsetTag }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Subset Percent:</label>
+      <select [(ngModel)]="subsetPercent" (change)="onReloadableChange()">
+        <option *ngFor="let availableSubsetPercent of subsetPercentages" [value]="availableSubsetPercent">{{ availableSubsetPercent }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Context ID:</label>
+      <input [(ngModel)]="contextId" (input)="loadData()" placeholder="Context ID">
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Item ID:</label>
+      <input [(ngModel)]="itemId" (input)="loadData()" placeholder="Item ID">
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Classification Name:</label>
+      <input [(ngModel)]="classificationName" (input)="loadData()" placeholder="Classification Name">
+    </div>
+    <ng-container *ngIf="selectedMode === 'mode1'">
+      <div class="app-control-item">
+        <label class="app-control-label">Minimum Evaluation:</label>
+        <select [(ngModel)]="evaluationLikertValMin" (change)="loadData()">
+          <option *ngFor="let option of likertOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      <div class="app-control-item">
+        <label class="app-control-label">Maximum Evaluation:</label>
+        <select [(ngModel)]="evaluationLikertValMax" (change)="loadData()">
+          <option *ngFor="let option of likertOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+    </ng-container>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="desc" (change)="loadData()"> Most recent first
+      </label>
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="excludeItemsWithFeedback" (change)="loadData()"> Exclude items already having feedback
+      </label>
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="cleanUi" (change)="updateURLParameters()"> Show clean UI
+      </label>
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="onlyIncludeWithManual" (change)="updateURLParameters()"> Only with manual
+      </label>
+    </div>
+  </div>
+
+</ng-template>
+
+<!-- Template for pagination controls -->
+<ng-template #paginationControlsTemplate>
+
+  <div *ngIf="evaluationData && evaluationData.length > 0">
+    <p>Page {{ page }}. Displaying {{ evaluationData.length }} items. {{ remaining }} items remaining.</p>
+    <button (click)="previousPage()" [disabled]="page === 1">Previous</button>&nbsp;
+    <button (click)="nextPage()" [disabled]="remaining === 0">Next</button>
+    <label for="count">&nbsp;&nbsp;Number of items to retrieve: </label>
+    <select [(ngModel)]="count" (change)="onCountChange()">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="50">50</option>
+    </select>
+  </div>
+
+</ng-template>
+
+<!-- Template for header section (mode 1) -->
+<ng-template #mode1HeaderTemplate>
+
+  <div class="evaluation-header">
+
+    <h3>Evaluation items (Mode 1)</h3>
+    
+      <ng-container *ngIf="! cleanUi">
+        <p>This mode allows you to explore the evaluation data that has been recorded by an AI LLM service for each of the displayed items.  You will see how the service evaluated the classification for each item from one or more 'perspectives'.<p>
+        <p>You are asked to give your own feedback on how accurate the AI evaluation is.  You can do this by selecting an alternative value in the dropdown that matches what you think the evaluation <i>should</i> be; alternatively, click on CONCUR to record your agreement with the AI's evaluation.  If you check the 'Exclude items already having feedback' checkbox, items will be removed from the page as you give feedback on them, so you can focus only one items that you have not responded to.</p>
+      </ng-container>
+
+  
+  </div>
+
+</ng-template>
+
+<!-- Template for header section (mode 2) -->
+<ng-template #mode2HeaderTemplate>
+
+  <div class="evaluation-header">
+
+      <h3>Evaluation items (Mode 2)</h3>
+
+      <ng-container *ngIf="! cleanUi">
+        <p>This mode allows you to give feedback on how well items have been classified by some software.  You can review the item information sidplayed at the top, which includes its type, title, time and text, and for each classification model that the software uses you can submit your evaluation as to whether it has been correctly classified.<p>
+        <p>You are asked to evaluate the classification for each item from one or more 'perspectives'.  To do this, select a value in the dropdown that corresponds to your evaluation.  If you check the 'Exclude items already having feedback' checkbox, items will be removed from the page as you give feedback on them, so you can focus only one items that you have not responded to.</p>
+      </ng-container>
+
+  </div>
+
+</ng-template>
+
+<!-- Template for overall evaluation items content -->
+<ng-template #evaluationItemsTemplate>
+
+  <table class="evaluation-table">
+
+    <ng-container *ngFor="let item of evaluationData">
+
+      <tbody class="evaluation-item-container">
+
+        <ng-container *ngTemplateOutlet="evaluationItemTitleTemplate; context: { $implicit: item }"></ng-container>
+        <ng-container *ngTemplateOutlet="evaluationItemSummaryTemplate; context: { $implicit: item }"></ng-container>
+
+        <tr class="evaluation-item-content">
+
+          <td>
+
+            <table class="evaluation-result-table">
+              <ng-container *ngFor="let result of item.results">
+                <tr>
+                    <td>
+                      <ng-container *ngTemplateOutlet="evaluationClassificationItemTemplate; context: { 'item': item, 'result': result }"></ng-container>
+                    </td>
+                </tr>
+              </ng-container>
+            </table>
+            <!-- Popup or Modal Trigger for Additional Data -->
+            <!--button (click)="showAdditionalInfo(item)">Show Additional Info</button-->
+          </td>
+        </tr>
+
+      </tbody>
+
+    </ng-container>
+
+  </table>
+
+</ng-template>
+
+<!-- Template for item title -->
+<ng-template #evaluationItemTitleTemplate let-item>
+
+  <tr class="evaluation-item-title">
+    <!-- Title Row -->
+    <td>
+      <a [href]="item.info.item_url" target="_blank">
+          {{ 
+              item.evaluate_title 
+              ? item.evaluate_title 
+              : (item.evaluate_text.length > 100 
+                  ? (item.evaluate_text.substring(0, 100) + '...') 
+                  : item.evaluate_text)
+          }}
+      </a>
+
+    </td>
+
+  </tr>
+
+</ng-template>
+
+<!-- Template for item summary -->
+<ng-template #evaluationItemSummaryTemplate let-item>
+
+  <tr class="evaluation-item-summary">
+    <!-- Content Row -->
+    <td>
+
+      <table width="100%">
+          <tr>
+              <td width="80%">
+                  <table class="evaluation-item-summary-detail" border="0">
+                    <tr>
+                      <td class="evaluation-item-summary-detail-label evaluation-item-summary-detail-label-plus">{{ item.evaluate_source_type }}</td>
+                      <td class="evaluation-item-summary-detail-content-normal">{{ item.evaluate_source_channel }}</td>
+                      <td rowspan="3" width="100%"> </td>
+                      <td rowspan="3" width="1rem"> </td>
+                    </tr>
+                    <tr>
+                      <td class="evaluation-item-summary-detail-label">Sent</td>
+                      <td class="evaluation-item-summary-detail-content-normal">{{ utilityService.formatDateForDisplay(item.evaluate_time) }}</td>
+                    </tr>
+                    <tr>
+                      <td class="evaluation-item-summary-detail-label">Text</td>
+                      <td class="evaluation-item-summary-detail-content-text" colspan="2" [innerHTML]="this.utilityService.sanitiseAndRemoveLinksFromHtml(item.evaluate_text)"></td>
+                    </tr>
+                    <tr>
+                      <td class="evaluation-item-summary-detail-label">Persona</td>
+                      <td class="evaluation-item-summary-detail-content-normal">
+                        <strong>{{ item.persona_name }}</strong> ({{ item.persona_id }})
+                        <fa-icon [icon]="faInfoCircle" class="info-icon" title="Defined as: '{{ getPersonaText(item.persona_id) }}'."/>
+                      </td>
+                    </tr>
+                  </table>
+              </td>
+              <td valign="top">
+                <table class="evaluation-item-utility-icons">
+                  <tr>
+                    <td>
+                      <fa-icon [icon]="faFileCode" (click)="utilityService.copyItemToClipboard(item)" title="Copy this item JSON to clipboard"/>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <fa-icon [icon]="faCopy" (click)="utilityService.copyItemToClipboard(item.item_id)" title="Copy this item ID to clipboard"/>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <fa-icon [icon]="faLayerGroup" (click)="utilityService.copyItemToClipboard(item.context.context_id)" title="Copy this item's Context ID to clipboard"/>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <fa-icon [icon]="faTags" (click)="utilityService.copyItemToClipboard(item.tags)" title="Copy this item tags to clipboard"/>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+          </tr>
+      </table>
+
+    </td>
+  </tr>
+
+</ng-template>
+
+<!-- Template for item.result.classification instance -->
+<ng-template #evaluationClassificationItemTemplate let-item="item" let-result="result">
+
+  <table class="evaluation-classification-table">
+    <tr>
+        <td>
+            <table class="classification-subtable" title="This is the classification that was evaluated, please give your feedback on the evaluation.  The available classification options for this item were: {{ result.classification_options }}">
+              <tr class="classification-title">
+                <td>
+                  <span class="classification-title-name">{{ result.classification_name }}</span>:
+                  <span class="classification-title-value">{{ result.classification_value }}</span>
+                </td>
+              </tr>
+              <tr>
+                <td *ngIf="cleanUi" class="classification-spiel">
+                  <fa-icon [icon]="faInfoCircle" class="info-icon" title="This section is evaluating the classification chosen by the '{{ result.classification_name }}' model, which has possible values of {{ utilityService.formatStringArrayAsNiceList(result.classification_options) }}.  The chosen classification value for evaluation is: {{ result.classification_value }}" />
+                </td>
+                <td *ngIf="! cleanUi" class="classification-spiel">
+                  This section is evaluating the classification chosen by the 
+                  '<span class="classification-name">{{ result.classification_name }}</span>'
+                  model, which has possible values of
+                    <span class="classification-options" [innerHtml]=" utilityService.formatStringArrayAsNiceListWithSpans(result.classification_options, 'classification-options-item')"></span>.  The chosen classification value for evaluation is:
+                  <span class="classification-value">{{ result.classification_value }}</span>
+                </td>
+                
+              </tr>
+            </table>
+        </td>
+    </tr>
+    <!-- Nested EvaluationPerspective table -->
+    <tr>
+      <td colspan="1">
+        <table class="evaluation-perspective-table">
+          <ng-container *ngFor="let perspective of result.perspectives">
+            <tr>
+                <td>
+                  <ng-container *ngIf="selectedMode === 'mode1'">
+                    <ng-container *ngTemplateOutlet="evaluationPerspectiveItemMode1Template; context: { 'item': item, 'result': result, 'perspective': perspective }"></ng-container>
+                  </ng-container>
+                  <ng-container *ngIf="selectedMode === 'mode2'">
+                    <ng-container *ngTemplateOutlet="evaluationPerspectiveItemMode2Template; context: { 'item': item, 'result': result, 'perspective': perspective }"></ng-container>
+                  </ng-container>
+                </td>
+             </tr>
+          </ng-container>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+
+</ng-template>
+
+<!-- Template for item.result.classification.perspective instance -->
+<!-- This template shows the evaluation_likert_val and evaluation_text -->
+<!-- It is intended for MODE 1 -->
+<ng-template #evaluationPerspectiveItemMode1Template let-item="item" let-result="result" let-perspective="perspective">
+
+  <table class="evaluation-perspective-item-table">
+      <tr>
+        <td colspan="2" class="perspective-container" title="This evaluation has been done from the perspective of '{{ perspective.perspective_text }}'. Please give your feedback in this context">
+
+          <span *ngIf="! cleanUi" class="perspective-spiel">
+            The AI gave this feedback from the perspective <span class="perspective-name">{{ perspective.perspective_name }}</span>
+            <fa-icon [icon]="faInfoCircle" class="info-icon" title="Defined as: '{{ perspective.perspective_text }}'." />
+            - Click
+              <a href="javascript:void(0);" (click)="agreeWithEvaluation(item, result, perspective)">CONCUR</a>
+              if you agree with the evaluation or select alternative below:
+          </span>
+
+          <span *ngIf="cleanUi" class="perspective-spiel">
+            <span class="perspective-name">{{ perspective.perspective_name }} perspective</span>
+            <fa-icon [icon]="faInfoCircle" class="info-icon" title="Defined as: '{{ perspective.perspective_text }}'." />
+            &nbsp; 
+            <fa-icon 
+              [icon]="faSquareCheck" class="agree-icon" 
+              [ngClass]="{
+                'agree-icon-undecided': !perspective.feedback,
+                'agree-icon-agree': perspective.feedback && perspective.feedback.new_evaluation_likert_val === perspective.feedback.old_evaluation_likert_val,
+                'agree-icon-disagree': perspective.feedback && perspective.feedback.new_evaluation_likert_val !== perspective.feedback.old_evaluation_likert_val
+              }" 
+              title="Click here to record agreement with the evaluation for this perspective" 
+              (click)="agreeWithEvaluation(item, result, perspective)" />
+          </span>
+
+        </td>
+      </tr>
+      <tr>
+        <td title="This select shows the Likert value that you are giving feedback for - if you feel a different evaluation should have been given, select a different value here and this will be recorded as your feedback">
+          <span [class.select-feedback-present]="getHasFeedback(perspective)">
+            <select #likertSelect
+                [ngModel]="getDefaultLikertValue(perspective)"
+                (change)="onFeedbackChange(item, result, perspective, $event)">
+              <option *ngFor="let likertOption of likertOptions" [value]="likertOption.value">
+                {{ likertOption.label }}
+              </option>
+            </select>
+          </span>
+        </td>
+        <td width="100%" class="evaluation-text" title="This text is how the evaluator described/justified their information; it is for your information only">{{ perspective.evaluation_text }}</td>
+      </tr>
+
+      <tr class="mismatch-label">
+        <td colspan="2">
+          <label>
+            <input type="checkbox"
+              [ngModel]="perspective.feedback ? perspective.feedback.text_likert_mismatch : false"
+              (ngModelChange)="updateMismatch($event, item, result, perspective)"
+              [checked]="getExistingMismatchChecked(perspective)">
+            Text and Likert scale value mismatch for '{{ getLikertLabel(perspective.evaluation_likert_val) }}'
+            <fa-icon [icon]="faInfoCircle"
+              class="info-icon"
+              [title]="'Check this box if the original likert that you are evaluating (\'' +
+                    getLikertLabel(perspective.evaluation_likert_val) +
+                    '\') does not agree with the text from the evaluator: \'' +
+                    perspective.evaluation_text + '\''" />
+          </label>
+        </td>
+      </tr>
+
+      <ng-container *ngIf="! cleanUi">
+        <tr class="perspective-feedback">
+          <td colspan="2" >
+            <table class="evaluation-item-utility-icons">
+              <tr>
+                <td width="100%">
+
+                  <ng-container *ngIf="! perspective.feedback">
+                        <small>No feedback recorded</small>
+                  </ng-container>
+       
+                  <ng-container *ngIf="getHasFeedback(perspective)">
+                    <span *ngIf="perspective.feedback.new_evaluation_likert_val === perspective.feedback.old_evaluation_likert_val; else differentValue">
+                      * - You already submitted that you agreed with the value of '{{ getLikertLabel(perspective.feedback.new_evaluation_likert_val) }}'
+                      on {{ utilityService.formatDateForDisplay(perspective.feedback.feedback_timestamp) }}
+                    </span>
+                    <ng-template #differentValue>
+                      * - You already submitted an evaluation as '{{ getLikertLabel(perspective.feedback.new_evaluation_likert_val) }}'
+                      on {{ utilityService.formatDateForDisplay(perspective.feedback.feedback_timestamp) }}.  The AI model had said:
+                      '{{ getLikertLabel(perspective.feedback.old_evaluation_likert_val) }}'
+                    </ng-template>
+                  </ng-container>
+
+                </td>
+                <td class="evaluation-item-summary" valign="bottom">
+                  <table class="evaluation-item-utility-icons">
+                    <tr>
+                      <td>
+                        <fa-icon [icon]="faCopy" (click)="copyItemResultToClipboard(item, result)" title="Copy details of this result to clipboard"/>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </ng-container>
+
+  </table>
+
+</ng-template>
+
+<!-- Template for item.result.classification.perspective instance -->
+<!-- This template shows a placeholder -->
+<!-- It is intended for MODE 2 -->
+<ng-template #evaluationPerspectiveItemMode2Template let-item="item" let-result="result" let-perspective="perspective">
+
+  <table class="evaluation-perspective-item-table">
+      <tr>
+          <td colspan="2" class="perspective-container" title="This evaluation should be done from the perspective of '{{ perspective.perspective_text }}'.">
+
+              <span class="perspective-spiel">
+                Please give your evaluation from the perspective <span class="perspective-name">{{ perspective.perspective_name }}</span>
+                <fa-icon [icon]="faInfoCircle" class="info-icon" title="Defined as: '{{ perspective.perspective_text }}'." />:
+              </span>
+
+          </td>
+      </tr>
+      <tr>
+        <td title="This select shows the Likert value that you are giving feedback for - if you feel a different evaluation should have been given, select a different value here and this will be recorded as your feedback">
+          <span [class.select-feedback-present]="getHasFeedback(perspective)">
+            <select #likertSelect
+                [ngModel]="getDefaultLikertValue(perspective)"
+                (change)="onFeedbackChange(item, result, perspective, $event)">
+              <option *ngFor="let likertOption of likertOptions" [value]="likertOption.value">
+                {{ likertOption.label }}
+              </option>
+            </select>
+          </span>
+        </td>
+        <td width="100%" class="evaluation-text" title=""></td>
+      </tr>
+
+      <tr class="mismatch-label">
+        <td colspan="2">
+          <label>
+            <input type="checkbox"
+              [ngModel]="perspective.feedback ? perspective.feedback.text_likert_mismatch : false"
+              (ngModelChange)="updateMismatch($event, item, result, perspective)"
+              [checked]="getExistingMismatchChecked(perspective)">
+            Text and Likert scale value mismatch for '{{ getLikertLabel(perspective.evaluation_likert_val) }}'
+            <fa-icon [icon]="faInfoCircle"
+              class="info-icon"
+              [title]="'Check this box if the original likert that you are evaluating (\'' +
+                    getLikertLabel(perspective.evaluation_likert_val) +
+                    '\') does not agree with the text from the evaluator: \'' +
+                    perspective.evaluation_text + '\''" />
+          </label>
+        </td>
+      </tr>
+
+      <ng-container *ngIf="! cleanUi">
+        <tr class="perspective-feedback">
+          <td colspan="2">
+
+            <ng-container *ngIf="getHasFeedback(perspective)">
+              <span *ngIf="perspective.feedback.new_evaluation_likert_val === perspective.feedback.old_evaluation_likert_val; else differentValue">
+                * - You submitted that you agreed with the value of '{{ getLikertLabel(perspective.feedback.new_evaluation_likert_val) }}'
+                on {{ utilityService.formatDateForDisplay(perspective.feedback.feedback_timestamp) }}
+              </span>
+              <ng-template #differentValue>
+                * - You submitted an evaluation as '{{ getLikertLabel(perspective.feedback.new_evaluation_likert_val) }}'
+                on {{ utilityService.formatDateForDisplay(perspective.feedback.feedback_timestamp) }}.  The AI model had said:
+                '{{ getLikertLabel(perspective.feedback.old_evaluation_likert_val) }}'
+              </ng-template>
+            </ng-container>
+
+          </td>
+        </tr>
+      </ng-container>
+
+  </table>
+
+</ng-template>

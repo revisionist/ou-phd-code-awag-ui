@@ -1,0 +1,221 @@
+$odd-row-color: #eeeeee;
+$even-row-color: #ffffff;
+
+body,
+.app-wrapper {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.training-header {
+  margin: 15px 0; /* Adjust top and bottom margins */
+  text-align: justify; /* Justify the text */
+  font-size: 16px; /* Adjust font size */
+  line-height: 1.5; /* Line spacing between lines */
+
+  p {
+    font-size: 0.9em;
+    margin-left: 1rem;
+    margin-right: 3.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h3 {
+    margin-top: 1em;
+    margin-left: 0.5rem;
+  }
+}
+
+.info-icon {
+    font-size: 0.6em;
+    vertical-align: top;
+    color: #999;
+    cursor: pointer;
+    margin-left: 0.2em;
+}
+
+.info-icon:hover {
+    color: #666;
+}
+
+.agree-icon {
+    font-size: 1em;
+    vertical-align: middle;
+    color: #999;
+    cursor: pointer;
+    margin-left: 0.3em;
+}
+
+.agree-icon-agree {
+    color: #669900;
+}
+
+.agree-icon-disagree {
+    color: #993300;
+}
+
+.agree-icon:hover {
+    color: #558000;
+}
+
+
+.training-table {
+
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  .training-item-container {
+    &:nth-child(odd) {
+      background-color: $odd-row-color;
+    }
+
+    &:nth-child(even) {
+      background-color: $even-row-color;
+    }
+
+    border-bottom: 1rem solid transparent;
+
+    .training-item-title {
+      td {
+        padding-top: 1rem;
+        padding-left: 0.5rem;
+        padding-bottom: 0.5rem;
+        text-align: left;
+        font-weight: bold;
+      }
+
+      a {
+        text-decoration: none;
+        color: #333366;
+        font-size: 1.2em;
+      }
+    }
+
+
+	.training-classifications {
+		float: right;
+		margin-right: 10px; /* Small amount of space to the right */
+		margin-left: 30px;  /* Small amount of space to the left */
+	}
+
+	.training-classifications-row td {
+		white-space: nowrap;
+		padding: 5px; /* Slightly more padding in each cell */
+	}
+
+	.training-classifications-item-name {
+		font-weight: bold; /* Bold font for item name */
+	}
+
+	.training-classifications-item-extra {
+		font-size: 0.7em; /* Slightly smaller font */
+		color: #555;      /* Dark grey color */
+	}
+
+
+	.training-item-commit-button {
+		margin-top: 0.5rem;
+	}
+
+    .training-item-summary {
+
+      .training-item-summary-detail {
+        margin-top: 0.5rem;
+        margin-left: 0.5rem;
+        padding-bottom: 0.5rem;
+        border: 1px solid grey;
+
+          .training-item-summary-detail-label {
+            color: #666666;
+            font-weight: bold;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            padding-right: 1rem;
+          }
+
+          .training-item-summary-detail-label-plus {
+            color: #333333;
+            font-size: 0.8em;
+          }
+
+          .training-item-summary-no-content {
+            color: #333333;
+            font-size: 0.7em;
+          }
+
+          .training-item-summary-detail-content-normal {
+              white-space: nowrap;
+          }
+
+          .training-item-summary-detail-content-text {
+            border: 0.5px solid #cccccc;
+            color: #333333;
+            font-size: 0.8em;
+          }
+
+          .training-item-summary-detail-content-text-nc {
+            font-size: 0.7em;
+			font-style: italic;
+            color: #999999;
+          }
+
+          td {
+            padding: 0.45rem;
+          }
+      
+	  }
+
+      .training-item-utility-icons {
+        margin-top: 0.5rem;
+        margin-left: 0.5rem;
+        border: 0;
+        border-collapse: collapse;
+        width: 100%;
+
+        td {
+          white-space: nowrap;
+          padding-bottom: 0.15rem;
+        }
+
+        fa-icon {
+          color: #999999;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .training-item-content {
+      .training-item-detail {
+        border: 1px solid grey;
+        margin-left: 0.5rem;
+
+        td {
+          white-space: nowrap;
+          padding: 0.45rem;
+        }
+      }
+
+      .training-result-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+        padding: 0;
+
+        .training-classification-table {
+          border: 1px solid #c0c0c0;
+          margin-left: 0.5rem;
+          margin-bottom: 0.5rem;
+          padding: 0.1rem;
+        }
+
+        td {
+          padding: 0.3rem;
+        }
+
+      }
+    }
+
+  }
+
+}

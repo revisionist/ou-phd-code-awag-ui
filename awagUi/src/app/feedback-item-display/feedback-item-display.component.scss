@@ -1,0 +1,290 @@
+$odd-row-color: #eeeeee;
+$even-row-color: #ffffff;
+
+body,
+.app-wrapper {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.evaluation-header {
+  margin: 15px 0; /* Adjust top and bottom margins */
+  text-align: justify; /* Justify the text */
+  font-size: 16px; /* Adjust font size */
+  line-height: 1.5; /* Line spacing between lines */
+
+  p {
+    font-size: 0.9em;
+    margin-left: 1rem;
+    margin-right: 3.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h3 {
+    margin-top: 1em;
+    margin-left: 0.5rem;
+  }
+}
+
+.info-icon {
+    font-size: 0.6em;
+    vertical-align: top;
+    color: #999;
+    cursor: pointer;
+    margin-left: 0.2em;
+}
+
+.info-icon:hover {
+    color: #666;
+}
+
+.agree-icon {
+    font-size: 1em;
+    vertical-align: middle;
+    color: #999;
+    cursor: pointer;
+    margin-left: 0.3em;
+}
+
+.agree-icon-agree {
+    color: #669900;
+}
+
+.agree-icon-disagree {
+    color: #993300;
+}
+
+.agree-icon:hover {
+    color: #558000;
+}
+
+span.select-feedback-present::after {
+  content: '*';
+  color: darkred;
+  margin-left: 5px;
+  font-size: 14px;
+  vertical-align: super;
+  position: absolute;
+  margin-top: 0px;
+}
+
+/* Ensure the span has relative positioning if the pseudo-element is absolute */
+span.select-feedback-present {
+  position: relative;
+  display: inline-block;
+}
+
+.evaluation-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  .evaluation-item-container {
+    &:nth-child(odd) {
+      background-color: $odd-row-color;
+    }
+
+    &:nth-child(even) {
+      background-color: $even-row-color;
+    }
+
+    border-bottom: 1rem solid transparent;
+
+    .evaluation-item-title {
+      td {
+        padding-top: 1rem;
+        padding-left: 0.5rem;
+        padding-bottom: 0.5rem;
+        text-align: left;
+        font-weight: bold;
+      }
+
+      a {
+        text-decoration: none;
+        color: #333366;
+        font-size: 1.2em;
+      }
+    }
+
+    .evaluation-item-summary {
+
+      .evaluation-item-summary-detail {
+        margin-left: 0.5rem;
+        border: 1px solid grey;
+
+          .evaluation-item-summary-detail-label {
+            color: #666666;
+            font-weight: bold;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            padding-right: 1rem;
+          }
+
+          .evaluation-item-summary-detail-label-plus {
+            color: #333333;
+            font-size: 0.8em;
+          }
+
+
+          .evaluation-item-summary-detail-content-normal {
+              white-space: nowrap;
+          }
+
+          .evaluation-item-summary-detail-content-text {
+            border: 0.5px solid #cccccc;
+            font-size: 0.8em;
+          }
+
+        td {
+          padding: 0.45rem;
+        }
+      }
+
+      .evaluation-item-utility-icons {
+        margin-left: 0.5rem;
+        border: 0;
+        border-collapse: collapse;
+        width: 100%;
+
+        td {
+          white-space: nowrap;
+          padding-bottom: 0.15rem;
+        }
+
+        fa-icon {
+          color: #999999;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .evaluation-item-content {
+      .evaluation-item-detail {
+        border: 1px solid grey;
+        margin-left: 0.5rem;
+
+        td {
+          white-space: nowrap;
+          padding: 0.45rem;
+        }
+      }
+
+      .evaluation-result-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+        padding: 0;
+
+        .evaluation-classification-table {
+          border: 1px solid #c0c0c0;
+          margin-left: 0.5rem;
+          margin-bottom: 0.5rem;
+          padding: 0.1rem;
+        }
+
+        td {
+          padding: 0.3rem;
+        }
+
+        .classification-subtable {
+          width: 100%;
+          margin-top: 0.2rem;
+          border-collapse: collapse;
+
+          td {
+            padding: 0;
+          }
+
+          .classification-title {
+
+            text-transform: uppercase;
+            color: #666666;
+            font-size: 0.8em;
+
+            td {
+              padding-top: 0;
+              padding-left: 0;
+              padding-bottom: 0.5rem;
+            }
+
+            .classification-title-name {
+              font-weight: bold;
+            }
+
+            .classification-title-value {
+              text-decoration: none;
+            }
+          }
+
+          .classification-spiel {
+            .classification-name {
+              text-decoration: underline;
+            }
+
+            .classification-value {
+              text-align: left;
+              font-weight: bold;
+            }
+
+            .classification-options {
+              .classification-options-item {
+                font-weight: bold;
+              }
+            }
+          }
+        }
+
+        .evaluation-perspective-table {
+
+          width: 100%;
+          border-collapse: collapse;
+
+          .mismatch-label {
+		    font-style: italic;
+		    font-size: 0.8em;
+		    color: #333333;
+		  }
+
+          .evaluation-perspective-item-table {
+
+            margin-top: 0.5rem;
+            margin-bottom: 0.1rem;
+
+            td.evaluation-text {
+              padding-left: 0.8rem;
+              font-size: 0.8em;
+            }
+
+            .perspective-feedback {
+              font-style: italic;
+              font-size: 0.7em;
+              color: #333333;
+            }
+
+
+            .perspective-container {
+              width: 100%;
+
+              .perspective-spiel {
+
+                .perspective-name {
+                  text-decoration: underline;
+                }
+
+                .perspective-text {
+                  font-size: 0.7em;
+                }
+
+                a {
+                  text-decoration: none;
+                }
+
+              }
+
+            }
+          }
+        }
+      }
+    }
+  }
+}

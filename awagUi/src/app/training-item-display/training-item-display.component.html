@@ -1,0 +1,286 @@
+<!--
+BSD 3-Clause Clear License
+
+Copyright (c) 2023-2025, David Goddard. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions, and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions, and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY
+THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<h2>Training UI</h2>
+
+<ng-container *ngTemplateOutlet="exploreControlsTemplate"></ng-container>
+
+<ng-container *ngTemplateOutlet="paginationControlsTemplate"></ng-container>
+
+<div *ngIf="trainingData">
+
+  <ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
+  <ng-container *ngTemplateOutlet="trainingItemsTemplate"></ng-container>
+
+  <ng-container *ngTemplateOutlet="paginationControlsTemplate"></ng-container>
+
+</div>
+
+<!-- Template for explore controls at top of page -->
+<ng-template #exploreControlsTemplate>
+
+  <div class="app-controls-wrapper">
+    <div class="app-control-item">
+      <label class="app-control-label">Classification:</label>
+      <div *ngFor="let classification of classificationsArray">
+        <input type="checkbox" 
+               [id]="classification.model_id" 
+               [(ngModel)]="classification.checked" 
+               (change)="onClassificationChange()">
+        <label [for]="classification.model_id">{{ classification.model_id }}</label>
+      </div>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Tag:</label>
+      <select [(ngModel)]="tag" (change)="loadData()">
+        <option value="">Select a tag</option>
+        <option *ngFor="let availableTag of tags" [value]="availableTag">{{ availableTag }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Time Period:</label>
+      <select [(ngModel)]="lastNHours" (change)="onReloadableChange()">
+        <option *ngFor="let timeOption of lastNHoursOptions" [value]="lastNHoursValues[timeOption]">{{ timeOption }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Subset Tag:</label>
+      <select [(ngModel)]="subsetTag" (change)="onReloadableChange()">
+        <option *ngFor="let availableSubsetTag of subsetTags" [value]="availableSubsetTag">{{ availableSubsetTag }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Subset Percent:</label>
+      <select [(ngModel)]="subsetPercent" (change)="onReloadableChange()">
+        <option *ngFor="let availableSubsetPercent of subsetPercentages" [value]="availableSubsetPercent">{{ availableSubsetPercent }}</option>
+      </select>
+    </div>
+    <div class="app-control-item">
+      <label class="app-control-label">Item ID:</label>
+      <input [(ngModel)]="itemId" (input)="loadData()" placeholder="Item ID">
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="desc" (change)="loadData()"> Most recent first
+      </label>
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="onlyIncludeUntrained" (change)="loadData()"> Exclude already trained items
+      </label>
+    </div>
+    <div class="app-control-item">
+      <label class="app-checkbox-label">
+        <input type="checkbox" [(ngModel)]="cleanUi" (change)="updateURLParameters()"> Hide hints &amp; extra information
+      </label>
+    </div>
+  </div>
+
+</ng-template>
+
+<!-- Template for pagination controls -->
+<ng-template #paginationControlsTemplate>
+
+  <div *ngIf="trainingData && trainingData.length > 0">
+    <p>Page {{ page }}. Displaying {{ trainingData.length }} items. {{ remaining }} items remaining.</p>
+    <button (click)="previousPage()" [disabled]="page === 1">Previous</button>&nbsp;
+    <button (click)="nextPage()" [disabled]="remaining === 0">Next</button>
+    <label for="count">&nbsp;&nbsp;Number of items to retrieve: </label>
+    <select [(ngModel)]="count" (change)="onCountChange()">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="50">50</option>
+    </select>
+  </div>
+
+</ng-template>
+
+<!-- Template for header section (mode 1) -->
+<ng-template #headerTemplate>
+
+  <div class="training-header">
+
+    <h3>Training items</h3>
+    
+      <ng-container *ngIf="! cleanUi">
+        <p>Use this page to traing the Awareness Agent data models.  For each item a list of models, and the classifications already chosen by the agent, are displayed on the right.  Check that each matches your interpretation of the item, and adjust as needed.  When you're happy that all of the displayed clasifications are correct, click on Commit Changes.  This will write training for <i>all</i> of the displayed classifications.  If all of the items are already correctly classified, you can click on Commit Changes to submit this also: the agent will use this data to reinforce its models.</p>
+      </ng-container>
+  
+  </div>
+
+</ng-template>
+
+<!-- Template for overall training items content -->
+<ng-template #trainingItemsTemplate>
+  <table class="training-table">
+
+    <ng-container *ngFor="let item of trainingData">
+
+      <tbody class="training-item-container">
+      
+        <ng-container *ngTemplateOutlet="trainingItemTitleTemplate; context: { $implicit: item }"></ng-container>
+        <ng-container *ngTemplateOutlet="trainingItemSummaryTemplate; context: { $implicit: item }"></ng-container>
+      
+      
+      </tbody>
+    </ng-container>
+  </table>
+</ng-template>
+
+
+<!-- Template for item title -->
+<ng-template #trainingItemTitleTemplate let-item>
+
+  <tr class="training-item-title">
+    <!-- Title Row -->
+    <td>
+      <a [href]="item.itemUrl" target="_blank">
+        {{ item.subject ? item.subject : (item.summaryText ? (item.summaryText | truncate:100) : (item.bodyText | truncate:100)) }}
+      </a>
+    </td>
+  </tr>
+
+</ng-template>
+
+
+<!-- Template for item summary -->
+<ng-template #trainingItemSummaryTemplate let-item>
+  <tr class="training-item-summary">
+    <td>
+      <table width="100%">
+        <tr valign="top">
+          <td width="80%">
+
+            <table width="100%">
+                <tr>
+                    <td width="100%">
+                        <table class="training-item-summary-detail" border="0">
+                          <tr>
+                            <td class="training-item-summary-detail-label training-item-summary-detail-label-plus">{{ item.typeDescription }}</td>
+                            <td class="training-item-summary-detail-content-normal">{{ item.channel }}</td>
+                            <td rowspan="3" width="100%"> </td>
+                            <td rowspan="3" width="1rem"> </td>
+                          </tr>
+                          <tr>
+                            <td class="training-item-summary-detail-label">Sent</td>
+                            <td class="training-item-summary-detail-content-normal">{{ utilityService.formatDateForDisplay(item.date) }}</td>
+                          </tr>
+                          <tr>
+                            <td class="training-item-summary-detail-label">From</td>
+                            <td class="training-item-summary-detail-content-normal">{{ item.from || item.to }}</td>
+                          </tr>
+                          <tr>
+                            <td class="training-item-summary-detail-label">Text</td>
+                          
+                            <td class="training-item-summary-detail-content-text" colspan="2"
+                                [ngClass]="{'training-item-summary-detail-content-text-nc': ! item.subject}">
+                                {{ item.subject ? (item.summaryText ? (item.summaryText | truncate:400) : (this.utilityService.sanitiseAndRemoveLinksFromHtml(item.bodyText) | truncate:400)) : 'No additional text' }}
+                            </td>
+                          </tr>
+                        </table>
+                    </td>
+                    <td valign="top">
+                      <table class="training-item-utility-icons">
+                        <tr>
+                          <td>
+                            <fa-icon [icon]="faFileCode" (click)="utilityService.copyItemToClipboard(item)" title="Copy this item JSON to clipboard"/>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <fa-icon [icon]="faListAlt" (click)="utilityService.copyItemToClipboard(item.summaryInfo)" title="Copy this item summary to clipboard"/>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <fa-icon [icon]="faCopy" (click)="utilityService.copyItemToClipboard(item.itemId)" title="Copy this item ID to clipboard"/>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <fa-icon [icon]="faTags" (click)="utilityService.copyItemToClipboard(item.tags)" title="Copy this item tags to clipboard"/>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                </tr>
+                <tr>
+                  <td  colspan="1" align="right">
+                    <button class="training-item-commit-button" (click)="ignoreItem(item)">Ignore Item</button>
+                    &nbsp;
+                    <button class="training-item-commit-button" (click)="commitTrainingChanges(item)">Commit Changes</button>
+                  </td>
+                  <td colspan="1" align="right">
+                  </td>
+                </tr>
+            </table>
+
+          </td>
+
+          <td valign="top">
+            <ng-container *ngTemplateOutlet="trainingItemClassificationsTemplate; context: { $implicit: item }"></ng-container>
+          </td>
+
+        </tr>
+      </table>
+    </td>
+  </tr>
+</ng-template>
+
+
+<!-- Template for item classifications -->
+<ng-template #trainingItemClassificationsTemplate let-item>
+  <table class="training-classifications" style="float: right;">
+    <tr class="training-classifications-row" *ngFor="let classification of item.classifications">
+      <td class="training-classifications-item-name" title="{{ classificationsDict[classification.classificationName] }}">
+        {{ classification.classificationName }}
+      </td>
+      <ng-container *ngIf="! cleanUi">
+        <td class="training-classifications-item-extra">
+          [{{ classification.classificationOrig }}
+          <span *ngIf="classification.classificationNew">
+            &rarr; {{ classification.classificationNew }}
+          </span>]
+        </td>
+      </ng-container>
+      <td class="training-classifications-item-value">
+        <select [(ngModel)]="classification.selectedClassification"
+                [style.width]="calculateSelectBoxWidth()">
+          <option *ngFor="let availableClassification of classification.availableClassifications"
+                  [value]="availableClassification">
+            {{ availableClassification }}
+          </option>
+        </select>
+      </td>
+    </tr>
+  </table>
+</ng-template>
+
